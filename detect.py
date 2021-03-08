@@ -1,7 +1,7 @@
 import argparse
 import time
 from pathlib import Path
-
+import multipersonopenpose as mp
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
@@ -65,10 +65,13 @@ def detect(save_img=False):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
 
     # Run inference
+    
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
+        print("Path = {}"+path)
+        mp.predictPose(cv2.imread(path),net)
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -76,7 +79,9 @@ def detect(save_img=False):
             img = img.unsqueeze(0)
 
         # Inference
+
         t1 = time_synchronized()
+        
         pred = model(img, augment=opt.augment)[0]
 
         # Apply NMS
