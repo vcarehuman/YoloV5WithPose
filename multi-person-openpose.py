@@ -4,20 +4,6 @@ import numpy as np
 from random import randint
 import argparse
 
-parser = argparse.ArgumentParser(description='Run keypoint detection')
-parser.add_argument("--device", default="cpu", help="Device to inference on")
-parser.add_argument("--image_file", default="group.jpg", help="Input image")
-parser.add_argument("--protoFile", default="group.jpg", help="Input image")
-parser.add_argument("--weightsFile", default="group.jpg", help="Input image")
-
-args = parser.parse_args()
-
-
-
-image1 = cv2.imread(args.image_file)
-
-protoFile = args.protoFile
-weightsFile = args.weightsFile
 nPoints = 18
 # COCO Output Format
 keypointsMapping = ['Nose', 'Neck', 'R-Sho', 'R-Elb', 'R-Wr', 'L-Sho', 'L-Elb', 'L-Wr', 'R-Hip', 'R-Knee', 'R-Ank', 'L-Hip', 'L-Knee', 'L-Ank', 'R-Eye', 'L-Eye', 'R-Ear', 'L-Ear']
@@ -61,7 +47,7 @@ def getKeypoints(probMap, threshold=0.1):
 
 
 # Find valid connections between the different joints of a all persons present
-def getValidPairs(output):
+def getValidPairs(output,frameWidth,frameHeight,detected_keypoints):
     valid_pairs = []
     invalid_pairs = []
     n_interp_samples = 10
@@ -136,7 +122,7 @@ def getValidPairs(output):
 
 # This function creates a list of keypoints belonging to each person
 # For each detected valid pair, it assigns the joint(s) to a person
-def getPersonwiseKeypoints(valid_pairs, invalid_pairs):
+def getPersonwiseKeypoints(valid_pairs, invalid_pairs,keypoints_list):
     # the last number in each row is the overall score
     personwiseKeypoints = -1 * np.ones((0, 19))
 
@@ -169,7 +155,7 @@ def getPersonwiseKeypoints(valid_pairs, invalid_pairs):
                     personwiseKeypoints = np.vstack([personwiseKeypoints, row])
     return personwiseKeypoints
 
-def predictPose(image1):
+def predictPose(image1,net):
     # the last number in each row is the overall score
     frameWidth = image1.shape[1]
     frameHeight = image1.shape[0]
@@ -212,8 +198,8 @@ def predictPose(image1):
             cv2.putText(frameClone,keypointsMapping[i],detected_keypoints[i][j][0:2], cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[i], 2, cv2.LINE_AA)
 
 
-    valid_pairs, invalid_pairs = getValidPairs(output)
-    personwiseKeypoints = getPersonwiseKeypoints(valid_pairs, invalid_pairs)
+    valid_pairs, invalid_pairs = getValidPairs(output,frameWidth,frameHeight,detected_keypoints)
+    personwiseKeypoints = getPersonwiseKeypoints(valid_pairs, invalid_pairs,keypoints_list)
 
     for i in range(17):
         for n in range(len(personwiseKeypoints)):
