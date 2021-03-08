@@ -40,7 +40,16 @@ def detect(save_img=False):
     if classify:
         modelc = load_classifier(name='resnet101', n=2)  # initialize
         modelc.load_state_dict(torch.load('weights/resnet101.pt', map_location=device)['model']).to(device).eval()
-
+    protoFile = opt.protoFile
+    weightsFile = opt.weightsFile
+    net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
+    if opt.posedevice == "cpu":
+        net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
+        print("Using CPU device")
+    elif opt.posedevice == "gpu":
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+        print("Using GPU device")
     # Set Dataloader
     vid_path, vid_writer = None, None
     if webcam:
@@ -161,6 +170,9 @@ if __name__ == '__main__':
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+    parser.add_argument("--protoFile", default="group.jpg", help="Input image")
+    parser.add_argument("--weightsFile", default="group.jpg", help="Input image")
+    parser.add_argument("--posedevice", default="gpu", help="Device to inference on")
     opt = parser.parse_args()
     print(opt)
 
